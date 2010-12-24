@@ -17,6 +17,7 @@ Jeweler::Tasks.new do |gem|
   gem.extensions << "ext/bencode_ext/extconf.rb"
 end
 Jeweler::RubygemsDotOrgTasks.new
+Jeweler::GemcutterTasks.new
 
 require 'rake/testtask'
 Rake::TestTask.new(:test) do |test|
