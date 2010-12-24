@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
     "README.rdoc",
     "Rakefile",
     "VERSION",
+    "bencode_ext.gemspec",
     "ext/bencode_ext/bencode.c",
     "ext/bencode_ext/bencode.h",
     "ext/bencode_ext/extconf.rb",
