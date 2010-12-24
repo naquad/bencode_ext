@@ -1,5 +1,7 @@
 # rcov generated
 coverage
+tmp/*
+lib/*
 
 # rdoc generated
 rdoc
