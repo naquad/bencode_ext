@@ -2,7 +2,7 @@ require 'rubygems'
 require 'test/unit'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'ext'))
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'bencode_ext'
 
 class Test::Unit::TestCase
