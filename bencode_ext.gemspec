@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["naquad"]
-  s.date = %q{2010-12-24}
+  s.date = %q{2011-01-01}
   s.description = %q{BEncodeExt is implementation of Bencode reader/writer (BitTorent encoding) in C.}
   s.email = %q{naquad@gmail.com}
   s.extensions = ["ext/bencode_ext/extconf.rb", "ext/bencode_ext/extconf.rb"]
