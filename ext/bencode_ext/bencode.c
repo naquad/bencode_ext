@@ -66,13 +66,11 @@ static VALUE _decode(char** str, long* len, long rlen){
       NEXT_CHAR;
 
       while(**str != 'e' && *len){
-        long t = rlen - *len;
+        long t = *len;
         VALUE k = _decode(str, len, rlen);
 
-        if(NIL_P(k))
-          rb_raise(DecodeError, "Unpexpected dictionary end!");
-        else if(TYPE(k) != T_STRING)
-          rb_raise(DecodeError, "Dictionary key is not a string at %d!", t);
+        if(TYPE(k) != T_STRING)
+          rb_raise(DecodeError, "Dictionary key is not a string at %d!", rlen - t);
 
         rb_hash_aset(ret, k, _decode(str, len, rlen));
       }
