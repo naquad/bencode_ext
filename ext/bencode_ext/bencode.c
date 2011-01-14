@@ -294,7 +294,7 @@ static VALUE get_max_depth(VALUE self){
  *    BEncode.max_depth = _integer_
  *
  * Sets maximum depth of parsed structure.
- * Expects integer greater than 0.
+ * Expects integer greater or equal to 0.
  * By default this value is 5000.
  * Assigning nil will disable depth check.
  */
