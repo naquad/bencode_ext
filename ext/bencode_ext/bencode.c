@@ -23,88 +23,28 @@
 
 #include "bencode.h"
 
-#define NEXT_CHAR ++*str; --*len;
-#define END_CHECK_SKIP(t) {if(!*len)\
-                            rb_raise(DecodeError, "Unpexpected " #t " end!");\
-                           if(**str != 'e')\
-                            rb_raise(DecodeError, "Mailformed " #t " at %d byte: %c", rlen - *len, **str);\
-                           NEXT_CHAR;}
-
 static long parse_num(char** str, long* len){
   long t = 1, ret = 0;
 
   if(**str == '-'){
     t = -1;
-    NEXT_CHAR;
+    ++*str;
+    --*len;
   }
 
   while(*len && **str >= '0' && **str <= '9'){
     ret = ret * 10 + (**str - '0');
-    NEXT_CHAR;
+    ++*str;
+    --*len;
   }
 
   return ret * t;
 }
 
-static VALUE _decode(char** str, long* len, long rlen){
-  if(!*len)
-    return Qnil;
-
-  switch(**str){
-    case 'l':{
-      VALUE ret = rb_ary_new();
-      NEXT_CHAR;
-
-      while(**str != 'e' && *len)
-        rb_ary_push(ret, _decode(str, len, rlen));
-
-      END_CHECK_SKIP(list);
-      return ret;
-    }
-    case 'd':{
-      VALUE ret = rb_hash_new();
-      NEXT_CHAR;
-
-      while(**str != 'e' && *len){
-        long t = *len;
-        VALUE k = _decode(str, len, rlen);
-
-        if(TYPE(k) != T_STRING)
-          rb_raise(DecodeError, "Dictionary key is not a string at %d!", rlen - t);
-
-        rb_hash_aset(ret, k, _decode(str, len, rlen));
-      }
-
-      END_CHECK_SKIP(dictionary);
-      return ret;
-    }
-    case 'i':{
-      long t;
-      NEXT_CHAR;
-      t = parse_num(str, len);
-      END_CHECK_SKIP(integer);
-      return LONG2FIX(t);
-    }
-    case '0'...'9':{
-      VALUE ret;
-      long slen = parse_num(str, len);
-
-      if(slen < 0 || (*len && **str != ':'))
-        rb_raise(DecodeError, "Invalid string length specification at %d: %c", rlen - *len, **str);
-
-      if(!*len || *len < slen + 1)
-        rb_raise(DecodeError, "Unexpected string end!");
-
-      ret = rb_str_new(++*str, slen);
-      *str += slen;
-      *len -= slen + 1;
-      return ret;
-    }
-    default:
-      rb_raise(DecodeError, "Unknown element type at %d byte: %c", rlen - *len, **str);
-      return Qnil;
-  }
-}
+#define NEXT_CHAR ++str; --len;
+#define ELEMENT_SCALAR 0
+#define ELEMENT_STRUCT 1
+#define ELEMENT_END 2
 
 /*
  * Document-method: BEncode.decode
@@ -123,20 +63,99 @@ static VALUE _decode(char** str, long* len, long rlen){
  *    '6:string' => 'string'
  */
 
-static VALUE decode(VALUE self, VALUE str){
-  long rlen, len;
-  char* ptr;
-  VALUE ret;
+static VALUE decode(VALUE self, VALUE encoded){
+  long  len, rlen;
+  char* str;
+  VALUE ret, container_stack, current_container, key, crt;
 
-  if(!rb_obj_is_kind_of(str, rb_cString))
+  if(!rb_obj_is_kind_of(encoded, rb_cString))
     rb_raise(rb_eTypeError, "String expected");
 
-  rlen = len = RSTRING_LEN(str);
-  ptr = RSTRING_PTR(str);
-  ret = _decode(&ptr, &len, len);
+  len = rlen = RSTRING_LEN(encoded);
+  if(!len)
+    return Qnil;
+
+  str = RSTRING_PTR(encoded);
+  container_stack = rb_ary_new();
+  current_container = ret = key = Qnil;
+
+  while(len){
+    int state = ELEMENT_SCALAR;
+    switch(*str){
+      case 'l':
+      case 'd':
+        crt = *str == 'l' ? rb_ary_new() : rb_hash_new();
+        NEXT_CHAR;
+        if(NIL_P(current_container)){
+          ret = current_container = crt;
+          continue;
+        }
+        state = ELEMENT_STRUCT;
+        break;
+      case 'i':
+        NEXT_CHAR;
+        crt = LONG2FIX(parse_num(&str, &len));
+
+        if(!len)
+          rb_raise(DecodeError, "Unpexpected integer end!");
+        if(*str != 'e')
+          rb_raise(DecodeError, "Mailformed integer at %d byte: %c", rlen - len, *str);
+
+        NEXT_CHAR;
+        break;
+      case '0'...'9':{
+        long slen = parse_num(&str, &len);
+
+        if(slen < 0 || (len && *str != ':'))
+          rb_raise(DecodeError, "Invalid string length specification at %d: %c", rlen - len, *str);
+
+        if(!len || len < slen + 1)
+          rb_raise(DecodeError, "Unexpected string end!");
+
+        crt = rb_str_new(++str, slen);
+        str += slen;
+        len -= slen + 1;
+        break;
+      }
+      case 'e':
+        state = ELEMENT_END;
+        NEXT_CHAR;
+        break;
+      default:
+        rb_raise(DecodeError, "Unknown element type at %d: %c!", rlen - len, *str);
+    }
+
+    if(state == ELEMENT_END){
+      if(NIL_P(current_container))
+        rb_raise(DecodeError, "Unexpected container end at %d!", rlen - len);
+      current_container = rb_ary_pop(container_stack);
+    }else if(NIL_P(current_container)){
+      if(NIL_P(ret))
+        ret = crt;
+      break;
+    }else{
+      if(TYPE(current_container) == T_ARRAY){
+        rb_ary_push(current_container, crt);
+      }else if(NIL_P(key)){
+        if(TYPE(crt) != T_STRING)
+          rb_raise(DecodeError, "Dictionary key must be a string (at %d)!", rlen - len);
+        key = crt;
+      }else{
+        rb_hash_aset(current_container, key, crt);
+        key = Qnil;
+      }
+
+      if(state == ELEMENT_STRUCT){
+        rb_ary_push(container_stack, current_container);
+        if(max_depth > -1 && max_depth < RARRAY_LEN(container_stack) + 1)
+          rb_raise(DecodeError, "Structure is too deep!");
+        current_container = crt;
+      }
+    }
+  }
 
   if(len)
-    rb_raise(DecodeError, "String has garbage on the end (starts at %d).", rlen - len);
+    rb_raise(DecodeError, "String has garbage on the end (starts at %d: %s).", rlen - len);
 
   return ret;
 }
@@ -257,9 +276,53 @@ static VALUE mod_encode(VALUE self, VALUE x){
   return encode(x);
 }
 
+/*
+ * Document-method: max_depth
+ * call-seq:
+ *    BEncode.max_depth
+ *
+ * Get maximum depth of parsed structure.
+ */
+
+static VALUE get_max_depth(VALUE self){
+  return LONG2FIX(max_depth);
+}
+
+/*
+ * Document-method: max_depth=
+ * call-seq:
+ *    BEncode.max_depth = _integer_
+ *
+ * Sets maximum depth of parsed structure.
+ * Expects integer greater than 0.
+ * By default this value is 5000.
+ * Assigning nil will disable depth check.
+ */
+
+static VALUE set_max_depth(VALUE self, VALUE depth){
+  long t;
+
+  if(NIL_P(depth)){
+    max_depth = -1;
+    return depth;
+  }
+
+  if(!rb_obj_is_kind_of(depth, rb_cInteger))
+    rb_raise(rb_eArgError, "Integer expected!");
+
+  t = NUM2LONG(depth);
+  if(t < 0)
+    rb_raise(rb_eArgError, "Depth must be between 0 and 5000000");
+
+  max_depth = t;
+  return depth;
+}
+
 void Init_bencode_ext(){
   readId = rb_intern("read");
+  max_depth = 5000;
   BEncode = rb_define_module("BEncode");
+
   /*
    * Document-class: BEncode::DecodeError
    * Exception for indicating decoding errors.
@@ -275,6 +338,8 @@ void Init_bencode_ext(){
   rb_define_singleton_method(BEncode, "decode", decode, 1);
   rb_define_singleton_method(BEncode, "encode", mod_encode, 1);
   rb_define_singleton_method(BEncode, "decode_file", decode_file, 1);
+  rb_define_singleton_method(BEncode, "max_depth", get_max_depth, 0);
+  rb_define_singleton_method(BEncode, "max_depth=", set_max_depth, 1);
 
   rb_define_method(BEncode, "bencode", encode, 0);
   rb_define_method(rb_cString, "bdecode", str_bdecode, 0);
