@@ -31,6 +31,10 @@ class TestBencodeExt < Test::Unit::TestCase
       BEncode.max_depth = 1
       'lli1eee'.bdecode
     end
+    assert_raises(BEncode::DecodeError) do
+      BEncode.max_depth = 0
+      'li1ee'.bdecode
+    end
     assert_nothing_raised(BEncode::DecodeError) do
       BEncode.max_depth = 0
       'i1e'.bdecode

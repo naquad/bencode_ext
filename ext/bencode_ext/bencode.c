@@ -87,6 +87,8 @@ static VALUE decode(VALUE self, VALUE encoded){
         crt = *str == 'l' ? rb_ary_new() : rb_hash_new();
         NEXT_CHAR;
         if(NIL_P(current_container)){
+          if(max_depth == 0)
+            rb_raise(DecodeError, "Structure is too deep!");
           ret = current_container = crt;
           continue;
         }
