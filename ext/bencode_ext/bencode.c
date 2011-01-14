@@ -58,9 +58,9 @@ static long parse_num(char** str, long* len){
  *
  * Examples:
  *
- *    'i1e' => 1
- *    'i-1e' => -1
- *    '6:string' => 'string'
+ *    BEncode.decode('i1e') => 1
+ *    BEncode.decode('i-1e') => -1
+ *    BEncode.decode('6:string') => 'string'
  */
 
 static VALUE decode(VALUE self, VALUE encoded){
