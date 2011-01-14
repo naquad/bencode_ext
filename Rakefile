@@ -14,7 +14,6 @@ Jeweler::Tasks.new do |gem|
   gem.required_ruby_version = '~>1.9.2'
   gem.add_dependency 'rake-compiler', '~>0.7.5'
   gem.add_development_dependency "jeweler", "~> 1.5.2"
-  gem.extensions << "ext/bencode_ext/extconf.rb"
 end
 Jeweler::RubygemsDotOrgTasks.new
 Jeweler::GemcutterTasks.new
