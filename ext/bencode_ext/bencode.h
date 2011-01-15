@@ -7,6 +7,7 @@ static VALUE BEncode;
 static VALUE DecodeError;
 static VALUE EncodeError;
 static VALUE readId;
+static long max_depth;
 
 static long parse_num(char**, long*);
 static VALUE decode(VALUE, VALUE);
@@ -18,7 +19,6 @@ static VALUE _decode_file(VALUE);
 static VALUE decode_file(VALUE, VALUE);
 static VALUE get_max_depth(VALUE);
 static VALUE set_max_depth(VALUE, VALUE);
-static long max_depth;
 void Init_bencode_ext();
 
 #endif

@@ -314,7 +314,7 @@ static VALUE set_max_depth(VALUE self, VALUE depth){
 
   t = NUM2LONG(depth);
   if(t < 0)
-    rb_raise(rb_eArgError, "Depth must be between 0 and 5000000");
+    rb_raise(rb_eArgError, "Depth must be greather than or equal to 0");
 
   max_depth = t;
   return depth;
