@@ -108,7 +108,7 @@ static VALUE decode(VALUE self, VALUE encoded){
       case '0'...'9':{
         long slen = parse_num(&str, &len);
 
-        if(slen < 0 || (len && *str != ':'))
+        if(len && *str != ':')
           rb_raise(DecodeError, "Invalid string length specification at %d: %c", rlen - len, *str);
 
         if(!len || len < slen + 1)
@@ -136,10 +136,10 @@ static VALUE decode(VALUE self, VALUE encoded){
         ret = crt;
       break;
     }else{
-      if(TYPE(current_container) == T_ARRAY){
+      if(BUILTIN_TYPE(current_container) == T_ARRAY){
         rb_ary_push(current_container, crt);
       }else if(NIL_P(key)){
-        if(TYPE(crt) != T_STRING)
+        if(BUILTIN_TYPE(crt) != T_STRING)
           rb_raise(DecodeError, "Dictionary key must be a string (at %d)!", rlen - len);
         key = crt;
       }else{
@@ -149,7 +149,7 @@ static VALUE decode(VALUE self, VALUE encoded){
 
       if(state == ELEMENT_STRUCT){
         rb_ary_push(container_stack, current_container);
-        if(max_depth > -1 && max_depth < RARRAY_LEN(container_stack) + 1)
+        if(max_depth != -1 && max_depth < RARRAY_LEN(container_stack) + 1)
           rb_raise(DecodeError, "Structure is too deep!");
         current_container = crt;
       }
@@ -171,7 +171,7 @@ static VALUE _decode_file(VALUE fp){
  * call-seq:
  *    BEncode.decode_file(file)
  *
- * Load content of _file_ and decodes it.
+ * Loads content of _file_ and decodes it.
  * _file_ may be either IO instance or
  * String path to file.
  *
