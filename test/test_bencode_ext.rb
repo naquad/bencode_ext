@@ -23,6 +23,7 @@ class TestBencodeExt < Test::Unit::TestCase
     assert_equal([{'k' => 1}, {'k' => 2}, {'k' => {'v' => '123'}}], 'ld1:ki1eed1:ki2eed1:kd1:v3:123eee'.bdecode)
     assert_equal([[[1],1],1], 'llli1eei1eei1ee'.bdecode)
 
+    assert_raises(BEncode::DecodeError) { 'i1ei2e'.bdecode }
     assert_raises(BEncode::DecodeError) {'33:unpexpected_end'.bdecode }
     assert_raises(BEncode::DecodeError) { 'i1x'.bdecode }
     assert_raises(ArgumentError) { BEncode.max_depth = 1.1 }

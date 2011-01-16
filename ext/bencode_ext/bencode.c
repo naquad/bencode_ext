@@ -120,6 +120,9 @@ static VALUE decode(VALUE self, VALUE encoded){
         break;
       }
       case 'e':
+        if(NIL_P(current_container))
+          rb_raise(DecodeError, "Unexpected container end at %d!", rlen - len);
+        current_container = rb_ary_pop(container_stack);
         state = ELEMENT_END;
         NEXT_CHAR;
         break;
@@ -127,15 +130,11 @@ static VALUE decode(VALUE self, VALUE encoded){
         rb_raise(DecodeError, "Unknown element type at %d: %c!", rlen - len, *str);
     }
 
-    if(state == ELEMENT_END){
-      if(NIL_P(current_container))
-        rb_raise(DecodeError, "Unexpected container end at %d!", rlen - len);
-      current_container = rb_ary_pop(container_stack);
-    }else if(NIL_P(current_container)){
+    if(NIL_P(current_container)){
       if(NIL_P(ret))
         ret = crt;
       break;
-    }else{
+    }else if(state != ELEMENT_END){
       if(BUILTIN_TYPE(current_container) == T_ARRAY){
         rb_ary_push(current_container, crt);
       }else if(NIL_P(key)){
@@ -224,9 +223,9 @@ static VALUE encode(VALUE self){
     return encode(rb_id2str(SYM2ID(self)));
   }if(rb_obj_is_kind_of(self, rb_cString)){
     long len = RSTRING_LEN(self);
-    return rb_sprintf("%d:%.*s", len, len, RSTRING_PTR(self));
+    return rb_sprintf("%ld:%.*s", len, len, RSTRING_PTR(self));
   }else if(rb_obj_is_kind_of(self, rb_cInteger)){
-    return rb_sprintf("i%de", NUM2LONG(self));
+    return rb_sprintf("i%lde", NUM2LONG(self));
   }else if(rb_obj_is_kind_of(self, rb_cHash)){
     VALUE ret = rb_str_new2("d");
     rb_hash_foreach(self, hash_traverse, ret);
@@ -247,7 +246,7 @@ static VALUE encode(VALUE self){
 
 static int hash_traverse(VALUE key, VALUE val, VALUE str){
   if(!rb_obj_is_kind_of(key, rb_cString) && TYPE(key) != T_SYMBOL)
-    rb_raise(EncodeError, "Keys must be strings, not %s!", rb_class2name(CLASS_OF(key)));
+    rb_raise(EncodeError, "Keys must be strings or symbols, not %s!", rb_class2name(CLASS_OF(key)));
 
   rb_str_concat(str, encode(key));
   rb_str_concat(str, encode(val));
@@ -321,8 +320,8 @@ static VALUE set_max_depth(VALUE self, VALUE depth){
 }
 
 void Init_bencode_ext(){
-  readId = rb_intern("read");
   max_depth = 5000;
+  readId = rb_intern("read");
   BEncode = rb_define_module("BEncode");
 
   /*
