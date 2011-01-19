@@ -156,7 +156,7 @@ static VALUE decode(VALUE self, VALUE encoded){
   }
 
   if(len)
-    rb_raise(DecodeError, "String has garbage on the end (starts at %d: %s).", rlen - len);
+    rb_raise(DecodeError, "String has garbage on the end (starts at %d).", rlen - len);
 
   return ret;
 }
