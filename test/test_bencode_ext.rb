@@ -27,6 +27,7 @@ class TestBencodeExt < Test::Unit::TestCase
     assert_raises(BEncode::DecodeError) {'33:unpexpected_end'.bdecode }
     assert_raises(BEncode::DecodeError) { 'i1x'.bdecode }
     assert_raises(BEncode::DecodeError) { '2:asd'.bdecode }
+    assert_raises(BEncode::DecodeError) { 'd'.bdecode }
     assert_raises(ArgumentError) { BEncode.max_depth = 1.1 }
     assert_raises(ArgumentError) { BEncode.max_depth = -5 }
     assert_raises(BEncode::DecodeError) do

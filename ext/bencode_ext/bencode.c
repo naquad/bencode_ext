@@ -157,6 +157,8 @@ static VALUE decode(VALUE self, VALUE encoded){
 
   if(len)
     rb_raise(DecodeError, "String has garbage on the end (starts at %d).", rlen - len);
+  else if(!NIL_P(current_container))
+    rb_raise(DecodeError, "Unpexpected end of %s.", BUILTIN_TYPE(current_container) == T_HASH ? "dictionary" : "list");
 
   return ret;
 }
