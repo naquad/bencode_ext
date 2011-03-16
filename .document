@@ -1,5 +1,6 @@
 lib/**/*.rb
 bin/*
+ext/bencode_ext/*.c
 - 
 features/**/*.feature
 LICENSE.txt

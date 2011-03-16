@@ -26,6 +26,9 @@
 static long parse_num(char** str, long* len){
   long t = 1, ret = 0;
 
+  if(!*len)
+    return 0;
+
   if(**str == '-'){
     t = -1;
     ++*str;
@@ -110,7 +113,6 @@ static VALUE decode(VALUE self, VALUE encoded){
 
         if(len && *str != ':')
           rb_raise(DecodeError, "Invalid string length specification at %d: %c", rlen - len, *str);
-
         if(!len || len < slen + 1)
           rb_raise(DecodeError, "Unexpected string end!");
 
@@ -221,19 +223,25 @@ static VALUE decode_file(VALUE self, VALUE path){
  */
 
 static VALUE encode(VALUE self){
-  if(TYPE(self) == T_SYMBOL){
+  if(TYPE(self) == T_SYMBOL)
     return encode(rb_id2str(SYM2ID(self)));
-  }if(rb_obj_is_kind_of(self, rb_cString)){
+
+  if(rb_obj_is_kind_of(self, rb_cString)){
     long len = RSTRING_LEN(self);
     return rb_sprintf("%ld:%.*s", len, len, RSTRING_PTR(self));
-  }else if(rb_obj_is_kind_of(self, rb_cInteger)){
+  }
+  
+  if(rb_obj_is_kind_of(self, rb_cInteger))
     return rb_sprintf("i%lde", NUM2LONG(self));
-  }else if(rb_obj_is_kind_of(self, rb_cHash)){
+  
+  if(rb_obj_is_kind_of(self, rb_cHash)){
     VALUE ret = rb_str_new2("d");
     rb_hash_foreach(self, hash_traverse, ret);
     rb_str_cat2(ret, "e");
     return ret;
-  }else if(rb_obj_is_kind_of(self, rb_cArray)){
+  }
+  
+  if(rb_obj_is_kind_of(self, rb_cArray)){
     long i, c;
     VALUE *ptr, ret = rb_str_new2("l");
 
@@ -242,8 +250,9 @@ static VALUE encode(VALUE self){
 
     rb_str_cat2(ret, "e");
     return ret;
-  }else
-    rb_raise(EncodeError, "Don't know how to encode %s!", rb_class2name(CLASS_OF(self)));
+  }
+
+  rb_raise(EncodeError, "Don't know how to encode %s!", rb_class2name(CLASS_OF(self)));
 }
 
 static int hash_traverse(VALUE key, VALUE val, VALUE str){
