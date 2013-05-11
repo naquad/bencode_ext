@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{bencode_ext}
-  s.version = "0.2.6"
+  s.version = "0.2.7"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["naquad"]
-  s.date = %q{2011-01-22}
+  s.date = %q{2013-05-11}
   s.description = %q{BEncodeExt is implementation of Bencode reader/writer (BitTorent encoding) in C.}
   s.email = %q{naquad@gmail.com}
   s.extensions = ["ext/bencode_ext/extconf.rb"]
@@ -33,7 +33,7 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/naquad/bencode_ext}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.required_ruby_version = Gem::Requirement.new("> 1.9")
+  s.required_ruby_version = Gem::Requirement.new("> 1.9.1")
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{BitTorrent encoding parser/writer}
   s.test_files = [
