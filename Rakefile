@@ -1,22 +1,17 @@
 require 'rubygems'
 require 'rake'
 
-require 'jeweler'
-Jeweler::Tasks.new do |gem|
-  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = 'bencode_ext'
-  gem.homepage = 'http://github.com/naquad/bencode_ext'
-  gem.license = 'MIT'
-  gem.summary = %Q{BitTorrent encoding parser/writer}
-  gem.description = %Q{BEncodeExt is implementation of Bencode reader/writer (BitTorent encoding) in C.}
-  gem.email = 'naquad@gmail.com'
-  gem.authors = ['naquad']
-  gem.required_ruby_version = '~>1.9.2'
-  gem.add_development_dependency 'rake-compiler', '~>0.7.5'
-  gem.add_development_dependency 'jeweler', '~> 1.5.2'
+NAME = 'bencode_ext'
+
+desc 'Build gem'
+task :build do
+  Dir.chdir("ext/bencode_ext") do
+    ruby 'extconf.rb'
+    sh 'make'
+  end
+
+  cp 'ext/bencode_ext/bencode_ext.so', 'lib/bencode_ext.so'
 end
-Jeweler::RubygemsDotOrgTasks.new
-Jeweler::GemcutterTasks.new
 
 require 'rake/testtask'
 Rake::TestTask.new(:test) do |test|
@@ -36,7 +31,3 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('ext/**/*.c')
 end
-
-
-require 'rake/extensiontask'
-Rake::ExtensionTask.new('bencode_ext')
